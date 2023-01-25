@@ -20,8 +20,9 @@
         <h3>Add exercises</h3>
         <p><code>POST /api/users/:_id/exercises</code></p>
         <input id="uid" type="text" name="_id" placeholder=":_id" />
-        <input id="desc" type="text" name="description" placeholder="description*" />
-        <input id="dur" type="text" name="duration" placeholder="duration* (mins.)" />
+        <input id="authkey" type="text" name="authkey" placeholder="Enter your Auth Key*" required />
+        <input id="desc" type="text" name="description" placeholder="description*" required />
+        <input id="dur" type="text" name="duration" placeholder="duration* (mins.)" required />
         <input id="date" type="text" name="date" placeholder="date (yyyy-mm-dd)" />
         <input type="submit" value="Submit" />
       </form>

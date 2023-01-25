@@ -3,30 +3,15 @@ const app = express()
 const cors = require('cors')
 require('dotenv').config()
 const mongoose = require('mongoose')
-const nanoid = require ('nanoid')
 const bp = require('body-parser');
-
-const nid = nanoid.nanoid();
 
 mongoose.connect(process.env['MONGO_URI'], { useNewUrlParser: true, useUnifiedTopology: true }).then(()=>{
   console.log('database connected.')
 }).catch((err) => console.log(err.message));
 
-const Schema = mongoose.Schema;
-
-const userSchema = new Schema ({
-  userName: {type: String, required: true},
-  authKey: {type: String, required: true, default: nid}
-});
-const exSchema = new Schema ({
-  _id: {type: String, required: true},
-  desc: {type: String, required: true},
-  dura: {type: Number, required: true},
-  date: {type: String, required: true}
-});
-
-const User = mongoose.model('User', userSchema);
-const Exercise = mongoose.model('Exercise', exSchema);
+//Importing MongoDB Models for Users and Exercises
+const User = require('./dbmodels/user');
+const Exercise = require('./dbmodels/exercise');
 
 app.use(cors())
 app.use(express.static('public'))
@@ -66,7 +51,7 @@ app.route('/api/users')
          );
          newuser.save()
                 .then(saved => {
-                  res.json({"username": saved.userName, "_id": saved._id, "AuthKey": saved.authKey, "Status": "New User Created! Save your AuthKey!"})
+                  res.json({"username": saved.userName, "_id": saved._id, "AuthKey": saved.authKey, "Status": "New User Created! Save your AuthKey! Currently there is no way to retrieve your AuthKey!"})
                 })
                 .catch(err => {
                   res.send("An error has occured!");
@@ -82,6 +67,7 @@ app.route('/api/users')
 app.route('/api/users/:id/exercises')
    .post( async (req, res) => {
       const userId = req.body._id;
+      const userAuthKey = req.body.authkey;
       const validId = /^[a-f\d]{24}$/;
       if (validId.test(userId) === false) {
         res.send("Invalid UserID Format. It must be a single String of 12 bytes or a string of 24 hex characters");
@@ -89,9 +75,18 @@ app.route('/api/users/:id/exercises')
         const existingUser = await User.findOne({_id: userId});
           try{
             if (!existingUser) {
-              res.send("User Not Found")
+              res.send("User Not Found. Please Register with 'Create a New User'");
             } else {
-              res.send("User Found");
+                if (userAuthKey !== existingUser.authKey) {
+                  res.status(403).send("Auth Key Incorrect");
+                } else {
+                  const {description, duration, date} = req.body;
+                  const newExercise = new Exercise (
+                    {
+                      ///
+                    }
+                  )
+                }
               }
           } catch (err) {
               console.log(err);
@@ -102,6 +97,8 @@ app.route('/api/users/:id/exercises')
 
 //Exercise Tracker Get User Exercise Log
 //app.get('/api/users/:_id/logs');
+
+//include total exercise count by objects retrieved
 
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)
