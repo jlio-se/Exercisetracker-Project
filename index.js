@@ -16,7 +16,7 @@ const Schema = mongoose.Schema;
 
 const userSchema = new Schema ({
   userName: {type: String, required: true},
-  authKey: {type: String, required: true}
+  authKey: {type: String, required: true, default: nid}
 });
 const exSchema = new Schema ({
   _id: {type: String, required: true},
@@ -38,14 +38,52 @@ app.use("/api/users", bp.urlencoded({extended: false}));
 app.use(bp.json());
 
 //test first API endpoints
-app.get('/api/hello', (req, res) => {
+app.route('/api/hello')
+  .get((req, res) => {
   res.send('Greetings: Hello and Welcome!');
 });
 
+//Exercise Tracker Add New Users and View All Users
+app.route('/api/users')
+   .get((req, res) => {
+     User.find()
+         .select("-authKey")
+         .exec((err, records) => {
+           if (err) {return console.log(err)} else {
+             res.send(records);
+           }
+         });
+   })
+   .post( async (req, res) => {
+     try {
+       const user = req.body.username;
+       const existingUser = await User.findOne({userName: user});
+       if (existingUser) {
+         res.json({"username": existingUser.userName, "_id": existingUser._id, "Status": "Existing User Found"});
+       } else {
+         const newuser = new User (
+           {userName: user}
+         );
+         newuser.save()
+                .then(saved => {
+                  res.json({"username": saved.userName, "_id": saved._id, "AuthKey": saved.authKey, "Status": "New User Created! Save your AuthKey!"})
+                })
+                .catch(err => {
+                  res.send("An error has occured!");
+                })
+         }
+     } catch (err) {
+       console.log(err);
+     }
+   });
 
 
+//Exercise Tracker Log Exercises
+//app.post('/api/users/:_id/exercises');
 
 
+//Exercise Tracker Get User Exercise Log
+//app.get('/api/users/:_id/logs');
 
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)
