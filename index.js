@@ -54,10 +54,10 @@ app.route('/api/users')
            }
          });
    })
-   .post( async (req, res) => {
-     try {
+   .post(async (req, res) => {
        const user = req.body.username;
        const existingUser = await User.findOne({userName: user});
+     try {
        if (existingUser) {
          res.json({"username": existingUser.userName, "_id": existingUser._id, "Status": "Existing User Found"});
        } else {
@@ -79,7 +79,25 @@ app.route('/api/users')
 
 
 //Exercise Tracker Log Exercises
-//app.post('/api/users/:_id/exercises');
+app.route('/api/users/:id/exercises')
+   .post( async (req, res) => {
+      const userId = req.body._id;
+      const validId = /^[a-f\d]{24}$/;
+      if (validId.test(userId) === false) {
+        res.send("Invalid UserID Format. It must be a single String of 12 bytes or a string of 24 hex characters");
+      } else {
+        const existingUser = await User.findOne({_id: userId});
+          try{
+            if (!existingUser) {
+              res.send("User Not Found")
+            } else {
+              res.send("User Found");
+              }
+          } catch (err) {
+              console.log(err);
+            }
+        }
+   });
 
 
 //Exercise Tracker Get User Exercise Log
