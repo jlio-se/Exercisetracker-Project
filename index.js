@@ -156,17 +156,17 @@ app.route('/api/users/:_id/logs')
             limit = 999;
           }
           if (from) {
-            objToRtr["from"] = from.toDateString();
+            //objToRtr["from"] = from.toDateString();
             dateFilter["$gte"] = from;
             if (to) {
-              objToRtr["to"] = to.toDateString();
+             // objToRtr["to"] = to.toDateString();
               dateFilter["$lte"] = to;
             } else {
               dateFilter["$lte"] = Date.now();
             }
           }
          if (to) {
-           objToRtr["to"] = to.toDateString();
+           //objToRtr["to"] = to.toDateString();
             dateFilter["$lt"] = to;
             dateFilter["$gte"] = new Date("1990-01-01");
          }
