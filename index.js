@@ -22,18 +22,12 @@ app.get('/', (req, res) => {
 app.use("/api/users", bp.urlencoded({extended: false}));
 app.use(bp.json());
 
-//test first API endpoints
-app.route('/api/hello')
-  .get((req, res) => {
-  res.send('Greetings: Hello and Welcome!');
-});
-
 //Exercise Tracker Add New Users and View All Users
 app.route('/api/users')
   //Viewing a list of user without displaying their auth key
    .get((req, res) => {
      User.find()
-         .select("-authKey")
+         .select("-authKey -__v")
          .exec((err, records) => {
            if (err) {return console.log(err)} else {
              res.send(records);
