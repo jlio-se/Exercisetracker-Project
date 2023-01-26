@@ -120,21 +120,96 @@ app.post('/api/users/:_id/exercises', (req, res) => {
    });
 
 //Exercise Tracker Get User Exercise Log
-/*app.route('/api/users/:_id/logs')
+app.route('/api/users/:_id/logs')
    .get((req, res) => {
      const id = req.params._id;
-     const {from, to, limit} = req.query;
+     let from = req.query.from;
+     let to = req.query.to;
+     let limit = req.query.limit;
+
+     if (from) {
+    from = new Date(from);
+    if (from == "Invalid Date") {
+      res.json("Invalid Date Entered");
+      return;
+    }
+  }
+
+  if (to) {
+    to = new Date(to);
+    if (to == "Invalid Date") {
+      res.json("Invalid Date Entered");
+      return;
+    }
+  }
+     
      User.findOne({_id: id}, (err, found) => {
        //if user does not exist
        if (!found) {
           res.send("User Not Found. Please Register with 'Create a New User'.");
         } else {
-          const username = found.userName;
-          
+          const usernameFound = found.username;
+          var objToRtr = {_id: id, username: usernameFound};
+          var logFilter = {username: usernameFound};
+          var dateFilter = {};
+          if (limit == null) {
+            limit = 999;
+          }
+          if (from) {
+            objToRtr["from"] = from.toDateString();
+            dateFilter["$gte"] = from;
+            if (to) {
+              objToRtr["to"] = to.toDateString();
+              dateFilter["$lte"] = to;
+            } else {
+              dateFilter["$lte"] = Date.now();
+            }
+          }
+         if (to) {
+           objToRtr["to"] = to.toDateString();
+            dateFilter["$lt"] = to;
+            dateFilter["$gte"] = new Date("1990-01-01");
+         }
+
+         if (to || from) {
+          logFilter.date = dateFilter;
+          }
+
+         Exercise.countDocuments(logFilter, (err, data) => {
+           if (err) {return console.log(err);}
+           let count = data;
+           if (limit && limit < count) {
+             count = limit;
+           }
+           objToRtr["count"] = count;
+
+           Exercise.find(logFilter, (err, data) => {
+             if (err) {return console.log(err);}
+
+             let logArray = [];
+             let subObj = {};
+             let count = 0;
+
+             data.forEach((item) => {
+               count += 1;
+               if (!limit || count <= limit) {
+                 subObj = {};
+                 subObj.description = item.description;
+                 subObj.duration = item.duration;
+                 subObj.date = item.date.toDateString();
+                 logArray.push(subObj);
+               }
+             });
+
+             objToRtr["log"] = logArray;
+
+             res.json(objToRtr);
+           });
+         });
         }
      });  
    });
-*/
+
 //include total exercise count by objects retrieved
 
 const listener = app.listen(process.env.PORT || 3000, () => {
