@@ -7,7 +7,7 @@ const Schema = mongoose.Schema;
 //User Schema with NanoID generating auth key for extra authentication
 
 const userSchema = new Schema ({
-  userName: {type: String, required: true},
+  username: {type: String, required: true},
   authKey: {type: String, required: true, default: nid}
 });
 
