@@ -68,26 +68,24 @@ app.route('/api/users')
 app.post('/api/users/:_id/exercises', (req, res) => {
      //#Variables from the html form
       const userId = req.body[':_id'] || req.params['_id'];
-     // const userAuthKey = req.body.authkey;
+      const userAuthKey = req.body.authkey;
       const exDesc = req.body.description;
       const exDura = req.body.duration;
       const exDate = req.body.date;
-//      const validId = /^[a-f\d]{24}$/;
+      const validId = /^[a-f\d]{24}$/;
       //#check if user ID is the correct format (MongoDB Obj ID, hex24)
-//      if (validId.test(userId) === false) {
-//        res.send("Invalid UserID Format. It must be a single String of 12 bytes or a string of 24 hex characters");
-//      } else {
+      if (validId.test(userId) === false) {
+        res.send("Invalid UserID Format. It must be a single String of 12 bytes or a string of 24 hex characters");
+      } else {
         //#If ID is correct format, check if user exists
       User.findOne({_id: userId}, (err, found) => {
         if (!found) {
               res.send("User Not Found. Please Register with 'Create a New User'.");
             } else {
               //#if user exists, check if their auth key is correct
-  /* temporary disabling authkey to pass FCC check
-              if (userAuthKey !== existingUser.authKey) {
+              if (userAuthKey !== found.authKey) {
                   res.status(403).send("Auth Key Incorrect");
                 } else { 
-  */
                   //#if their auth key is correct, log user's exercise event
                   const newExercise = new Exercise ({
                       username: found.username,
@@ -113,11 +111,11 @@ app.post('/api/users/:_id/exercises', (req, res) => {
                                console.log(err);
                                res.send("An Error has occured.");
                              });
-        }
-      })        
-             // }
-       // }
-   });
+                }
+            }
+      });       
+   }
+});
 
 //Exercise Tracker Get User Exercise Log
 app.route('/api/users/:_id/logs')
@@ -156,17 +154,14 @@ app.route('/api/users/:_id/logs')
             limit = 999;
           }
           if (from) {
-            //objToRtr["from"] = from.toDateString();
             dateFilter["$gte"] = from;
             if (to) {
-             // objToRtr["to"] = to.toDateString();
               dateFilter["$lte"] = to;
             } else {
               dateFilter["$lte"] = Date.now();
             }
           }
          if (to) {
-           //objToRtr["to"] = to.toDateString();
             dateFilter["$lt"] = to;
             dateFilter["$gte"] = new Date("1990-01-01");
          }
