@@ -12,6 +12,7 @@ mongoose.connect(process.env['MONGO_URI'], { useNewUrlParser: true, useUnifiedTo
 //Importing MongoDB Models for Users and Exercises
 const User = require('./dbmodels/user');
 const Exercise = require('./dbmodels/exercise');
+const Search = require('./action/usersearch.js')
 
 app.use(cors())
 app.use(express.static('public'))
@@ -26,6 +27,14 @@ app.use(bp.json());
 app.route('/api/users')
   //Viewing a list of user without displaying their auth key
    .get((req, res) => {
+      Search.listUser()
+            .then(list => {
+              res.send(list);
+            })
+            .catch(err => {
+                console.log(err);
+                res.send("An Error has occured.");
+     /*
      User.find()
          .select("-authKey -__v")
          .exec((err, records) => {
@@ -33,17 +42,22 @@ app.route('/api/users')
              res.send(records);
            }
          });
-   })
+     */
+    });
+   }) 
   //HTML form
-   .post(async (req, res) => {
-       const user = req.body.username;
-       const existingUser = await User.findOne({userName: user});
-     try {
+   .post((req,res) => {
+     const user = req.body.username;
+     User.findOne({userName: user}, (err, found) => {
+       if (err) {
+         console.log(err);
+         return;
+       }
        //Check if user exists
-       if (existingUser) {
-         res.json({"username": existingUser.userName, "_id": existingUser._id, "Status": "Existing User Found"});
+       if (found) {
+         res.json({"username": found.userName, "_id": found._id, "Status": "Existing User Found"});
        } else {
-       //If not, create new user
+         //If not, create new user
          const newuser = new User (
            {userName: user}
          );
@@ -54,13 +68,10 @@ app.route('/api/users')
                 .catch(err => {
                   console.log(err);
                   res.send("An error has occured!");
-                })
-         }
-     } catch (err) {
-       console.log(err);
-     }
+                });
+       }
+     });
    });
-
 
 //Exercise Tracker Log Exercises
 app.route('/api/users/:id/exercises')
@@ -81,7 +92,7 @@ app.route('/api/users/:id/exercises')
           try{
             //if user does not exist
             if (!existingUser) {
-              res.send("User Not Found. Please Register with 'Create a New User'");
+              res.send("User Not Found. Please Register with 'Create a New User'.");
             } else {
               //if user exists, check if their auth key is correct
                 if (userAuthKey !== existingUser.authKey) {
@@ -121,8 +132,22 @@ app.route('/api/users/:id/exercises')
    });
 
 //Exercise Tracker Get User Exercise Log
-//app.route('/api/users/:_id/logs')
-//   .get();
+app.route('/api/users/:_id/logs')
+   .get( async (req, res) => {
+     const id = req.params._id;
+     const {from, to, limit} = req.query;
+     const existingUser = await User.findOne({_id: id});
+     try {
+     //if user does not exist
+        if (!existingUser) {
+          res.send("User Not Found. Please Register with 'Create a New User'.");
+        } else {
+          res.send("User Found")
+        }
+     } catch (err) {
+       console.log(err);
+     }
+   });
 
 //include total exercise count by objects retrieved
 
