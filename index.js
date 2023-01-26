@@ -30,6 +30,7 @@ app.route('/api/hello')
 
 //Exercise Tracker Add New Users and View All Users
 app.route('/api/users')
+  //Viewing a list of user without displaying their auth key
    .get((req, res) => {
      User.find()
          .select("-authKey")
@@ -39,13 +40,16 @@ app.route('/api/users')
            }
          });
    })
+  //HTML form
    .post(async (req, res) => {
        const user = req.body.username;
        const existingUser = await User.findOne({userName: user});
      try {
+       //Check if user exists
        if (existingUser) {
          res.json({"username": existingUser.userName, "_id": existingUser._id, "Status": "Existing User Found"});
        } else {
+       //If not, create new user
          const newuser = new User (
            {userName: user}
          );
@@ -54,6 +58,7 @@ app.route('/api/users')
                   res.json({"username": saved.userName, "_id": saved._id, "AuthKey": saved.authKey, "Status": "New User Created! Save your AuthKey! Currently there is no way to retrieve your AuthKey!"})
                 })
                 .catch(err => {
+                  console.log(err);
                   res.send("An error has occured!");
                 })
          }
@@ -66,26 +71,53 @@ app.route('/api/users')
 //Exercise Tracker Log Exercises
 app.route('/api/users/:id/exercises')
    .post( async (req, res) => {
+     //Variables from the html form
       const userId = req.body._id;
       const userAuthKey = req.body.authkey;
+      const exDesc = req.body.description;
+      const exDura = req.body.duration;
+      const exDate = req.body.date;
       const validId = /^[a-f\d]{24}$/;
+      //check if user ID is the correct format (MongoDB Obj ID, hex24)
       if (validId.test(userId) === false) {
         res.send("Invalid UserID Format. It must be a single String of 12 bytes or a string of 24 hex characters");
       } else {
+        //If ID is correct format, check if user exists
         const existingUser = await User.findOne({_id: userId});
           try{
+            //if user does not exist
             if (!existingUser) {
               res.send("User Not Found. Please Register with 'Create a New User'");
             } else {
+              //if user exists, check if their auth key is correct
                 if (userAuthKey !== existingUser.authKey) {
                   res.status(403).send("Auth Key Incorrect");
                 } else {
-                  const {description, duration, date} = req.body;
-                  const newExercise = new Exercise (
-                    {
-                      ///
-                    }
-                  )
+                  //if their auth key is correct, log user's exercise event
+                  const newExercise = new Exercise ({
+                      userName: existingUser.userName,
+                      desc: exDesc,
+                      dura: exDura,
+                    });
+                  //if date is entered, register the entered date, otherwise it defaults
+                  if (exDate) {
+                    newExercise.date = exDate;
+                  }
+                  //save and response the json
+                  newExercise.save()
+                             .then(saved => {
+                               res.json({
+                                 "_id": userId,
+                                 "username": saved.userName,
+                                 "description": saved.desc,
+                                 "duration": saved.dura,
+                                 "date": saved.date.toDateString()
+                               });
+                             })
+                             .catch(err => {
+                               console.log(err);
+                               res.send("An Error has occured.");
+                             });
                 }
               }
           } catch (err) {
@@ -94,9 +126,9 @@ app.route('/api/users/:id/exercises')
         }
    });
 
-
 //Exercise Tracker Get User Exercise Log
-//app.get('/api/users/:_id/logs');
+//app.route('/api/users/:_id/logs')
+//   .get();
 
 //include total exercise count by objects retrieved
 
